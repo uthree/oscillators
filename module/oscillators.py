@@ -1,19 +1,8 @@
 import math
-import numpy as np
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
-
-def get_padding(kernel_size, dilation=1):
-    return int((kernel_size*dilation - dilation)/2)
-
-
-def init_weights(m, mean=0.0, std=0.01):
-    classname = m.__class__.__name__
-    if classname.find("Conv") != -1:
-        m.weight.data.normal_(mean, std)
 
 
 class HarmonicOscillator(nn.Module):
@@ -33,6 +22,13 @@ class HarmonicOscillator(nn.Module):
         self.weights = nn.Parameter(torch.ones(1, num_harmonics, 1))
 
     def forward(self, f0, uv):
+        '''
+        Args:
+            f0: fundamental frequency shape=[N, 1, L]
+            uv: unvoiced=0 / voiced=1 flag, shape=[N, 1, L]
+        Output
+            shape=[N, 1, L * frame_size]
+        '''
         with torch.no_grad():
             f0 = F.interpolate(f0, scale_factor=self.frame_size, mode='linear')
             voiced_mask = F.interpolate(uv, scale_factor=self.frame_size)
@@ -76,6 +72,13 @@ class CyclicNoiseOscillator(nn.Module):
         return kernel
 
     def forward(self, f0, uv):
+        '''
+        Args:
+            f0: fundamental frequency shape=[N, 1, L]
+            uv: unvoiced=0 / voiced=1 flag, shape=[N, 1, L]
+        Output
+            shape=[N, 1, L * frame_size]
+        '''
         with torch.no_grad():
             f0 = F.interpolate(f0, scale_factor=self.frame_size, mode='linear')
             N = f0.shape[0]
