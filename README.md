@@ -1,2 +1,2 @@
 # oscillators
-oscillator for neural source filter models
+oscillators for neural source filter models
