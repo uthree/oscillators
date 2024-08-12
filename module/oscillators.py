@@ -44,6 +44,35 @@ class HarmonicOscillator(nn.Module):
             source = voiced_part * voiced_mask + unvoiced_part * (1 - voiced_mask)
             source = (source * F.normalize(self.weights, p=2.0, dim=1)).sum(dim=1, keepdim=True)
         return source
+    
+
+class ImpulseOscillator(nn.Module):
+    def __init__(
+            self,
+            sample_rate,
+            frame_size,
+        ):
+        super().__init__()
+        self.sample_rate = sample_rate
+        self.frame_size = frame_size
+
+    def forward(self, f0, uv):
+        '''
+        Args:
+            f0: fundamental frequency shape=[N, 1, L]
+            uv: unvoiced=0 / voiced=1 flag, shape=[N, 1, L]
+        Output
+            shape=[N, 1, L * frame_size]
+        '''
+        with torch.no_grad():
+            f0 = F.interpolate(f0, scale_factor=self.frame_size, mode='linear')
+            voiced_mask = F.interpolate(uv, scale_factor=self.frame_size)
+            rad = torch.cumsum(-f0 / self.sample_rate, dim=2)
+            sawtooth = rad % 1.0
+            impluse = sawtooth - sawtooth.roll(1, dims=(2))
+            noise = torch.randn_like(impluse) * 0.333
+            source = impluse * voiced_mask + noise * (1 - voiced_mask)
+        return source
 
 
 class CyclicNoiseOscillator(nn.Module):
