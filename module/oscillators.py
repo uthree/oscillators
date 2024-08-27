@@ -80,7 +80,7 @@ class CyclicNoiseOscillator(nn.Module):
             self,
             sample_rate,
             frame_size,
-            base_frequency=110.0,
+            base_frequency=440.0,
             beta=0.78
         ):
         super().__init__()
@@ -95,7 +95,6 @@ class CyclicNoiseOscillator(nn.Module):
     def generate_kernel(self):
         t = torch.arange(0, self.kernel_size)[None, None, :]
         decay = torch.exp(-t * self.base_frequency / self.beta / self.sample_rate)
-        decay = decay.flip(dims=[2])
         noise = torch.randn_like(decay)
         kernel = noise * decay
         return kernel
